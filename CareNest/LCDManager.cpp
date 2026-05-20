@@ -152,6 +152,8 @@ void lcdManagerBegin(void)
 
   pinMode(OLED_DC_PIN, OUTPUT);
   digitalWrite(OLED_DC_PIN, LOW);
+
+  delay(20);
   
     Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
 
