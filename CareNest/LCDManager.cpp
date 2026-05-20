@@ -26,6 +26,12 @@ static unsigned int cachedDiaperCount = 0;
 static unsigned long cachedLastFeedMs = 0;
 static unsigned long cachedLastDiaperMs = 0;
 
+static bool i2cDevicePresent(uint8_t address)
+{
+    Wire.beginTransmission(address);
+    return Wire.endTransmission() == 0;
+}
+
 static void drawBottleLogo(void)
 {
     display.drawRoundRect(48, 8, 32, 44, 7, SSD1306_WHITE);
@@ -149,15 +155,33 @@ static void drawCurrentScreen(void)
 
 void lcdManagerBegin(void)
 {
+    uint8_t oledAddress = 0;
 
-  pinMode(OLED_DC_PIN, OUTPUT);
-  digitalWrite(OLED_DC_PIN, LOW);
+    pinMode(OLED_DC_PIN, OUTPUT);
+    digitalWrite(OLED_DC_PIN, LOW);
 
-  delay(20);
+    delay(20);
   
     Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
 
-    if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS)) {
+    if (i2cDevicePresent(OLED_ADDRESS_PRIMARY)) {
+        oledAddress = OLED_ADDRESS_PRIMARY;
+        Serial.println("Found address one");
+    } else if (i2cDevicePresent(OLED_ADDRESS_SECONDARY)) {
+        oledAddress = OLED_ADDRESS_SECONDARY;
+        Serial.println("Found address one");
+    }
+
+    if (oledAddress == 0) {
+        Serial.println("OLED not found on I2C addresses 0x3C or 0x3D");
+        displayReady = false;
+        return;
+    }
+
+    Serial.print("OLED found at I2C address 0x");
+    Serial.println(oledAddress, HEX);
+
+    if (!display.begin(SSD1306_SWITCHCAPVCC, oledAddress)) {
         Serial.println("OLED init failed");
         displayReady = false;
         return;
