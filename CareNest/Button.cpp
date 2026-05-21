@@ -1,20 +1,25 @@
 #include "Button.h"
 #include "config.h"
 
+// 2x2 Keypad matrix mapping
+// [row][col] = ButtonId
+static const ButtonId keypadMap[KEYPAD_ROWS][KEYPAD_COLS] = {
+    {BUTTON_DIAPER,   BUTTON_SELECT},  // Row 0: S1=FEED(0,0), S2=SELECT(0,1)
+    {BUTTON_MENU,     BUTTON_FEED  }   // Row 1: S3=MENU(1,0), S4=DIAPER(1,1)
+};
+
+// Row and column pin arrays
+static const uint8_t rowPins[KEYPAD_ROWS] = {KEYPAD_ROW0_PIN, KEYPAD_ROW1_PIN};
+static const uint8_t colPins[KEYPAD_COLS] = {KEYPAD_COL0_PIN, KEYPAD_COL1_PIN};
+
+// Button state tracking for debouncing
 typedef struct {
-    ButtonId id;
-    uint8_t pin;
     uint8_t stableState;
     uint8_t lastReading;
     unsigned long lastChangeMs;
-} ButtonState;
+} ButtonKeypadState;
 
-static ButtonState buttons[BUTTON_COUNT] = {
-    {BUTTON_FEED, FEED_BUTTON_PIN, HIGH, HIGH, 0},
-    {BUTTON_DIAPER, DIAPER_BUTTON_PIN, HIGH, HIGH, 0},
-    {BUTTON_MENU, MENU_BUTTON_PIN, HIGH, HIGH, 0},
-    {BUTTON_SELECT, SELECT_BUTTON_PIN, HIGH, HIGH, 0}
-};
+static ButtonKeypadState keypadState[KEYPAD_ROWS][KEYPAD_COLS];
 
 static ButtonId eventQueue[BUTTON_EVENT_QUEUE_SIZE];
 static uint8_t eventHead = 0;
@@ -32,37 +37,66 @@ static void queueEvent(ButtonId id)
 
 void buttonsBegin(void)
 {
-    uint8_t i;
+    uint8_t row, col;
 
-    for (i = 0; i < BUTTON_COUNT; i++) {
-        pinMode(buttons[i].pin, INPUT_PULLUP);
-        buttons[i].stableState = digitalRead(buttons[i].pin);
-        buttons[i].lastReading = buttons[i].stableState;
-        buttons[i].lastChangeMs = millis();
+    // Initialize row pins as outputs (will drive LOW for scanning)
+    for (row = 0; row < KEYPAD_ROWS; row++) {
+        pinMode(rowPins[row], OUTPUT);
+        digitalWrite(rowPins[row], HIGH);
+    }
+
+    // Initialize column pins as inputs with pull-ups
+    for (col = 0; col < KEYPAD_COLS; col++) {
+        pinMode(colPins[col], INPUT_PULLUP);
+    }
+
+    // Initialize keypad state
+    for (row = 0; row < KEYPAD_ROWS; row++) {
+        for (col = 0; col < KEYPAD_COLS; col++) {
+            keypadState[row][col].stableState = HIGH;
+            keypadState[row][col].lastReading = HIGH;
+            keypadState[row][col].lastChangeMs = millis();
+        }
     }
 }
 
 void buttonsUpdate(void)
 {
-    uint8_t i;
+    uint8_t row, col;
     unsigned long now = millis();
+    uint8_t reading;
 
-    for (i = 0; i < BUTTON_COUNT; i++) {
-        uint8_t reading = digitalRead(buttons[i].pin);
+    // Scan each row
+    for (row = 0; row < KEYPAD_ROWS; row++) {
+        // Set current row LOW (active), all others HIGH
+        digitalWrite(rowPins[row], LOW);
 
-        if (reading != buttons[i].lastReading) {
-            buttons[i].lastReading = reading;
-            buttons[i].lastChangeMs = now;
-        }
+        // Brief delay to allow column signals to settle
+        delayMicroseconds(5);
 
-        if ((now - buttons[i].lastChangeMs) >= BUTTON_DEBOUNCE_MS &&
-            reading != buttons[i].stableState) {
-            buttons[i].stableState = reading;
+        // Read each column for this row
+        for (col = 0; col < KEYPAD_COLS; col++) {
+            reading = digitalRead(colPins[col]);
 
-            if (buttons[i].stableState == LOW) {
-                queueEvent(buttons[i].id);
+            // Debounce logic
+            if (reading != keypadState[row][col].lastReading) {
+                keypadState[row][col].lastReading = reading;
+                keypadState[row][col].lastChangeMs = now;
+            }
+
+            if ((now - keypadState[row][col].lastChangeMs) >= BUTTON_DEBOUNCE_MS &&
+                reading != keypadState[row][col].stableState) {
+                keypadState[row][col].stableState = reading;
+
+                // Key press detected (LOW = pressed)
+                if (keypadState[row][col].stableState == LOW) {
+                    queueEvent(keypadMap[row][col]);
+                }
             }
         }
+
+        // Set row back HIGH to deselect
+        digitalWrite(rowPins[row], HIGH);
     }
 }
 

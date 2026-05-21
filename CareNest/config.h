@@ -12,11 +12,14 @@
 #define OLED_DC_PIN 18
 #define OLED_RESET_PIN -1
 
-#define FEED_BUTTON_PIN 4
-#define DIAPER_BUTTON_PIN 5
-#define MENU_BUTTON_PIN 6
-#define SELECT_BUTTON_PIN 7
+// 2x2 Keypad Matrix Pins
+#define KEYPAD_ROW0_PIN 10
+#define KEYPAD_ROW1_PIN 11
+#define KEYPAD_COL0_PIN 12
+#define KEYPAD_COL1_PIN 13
 
+#define KEYPAD_ROWS 2
+#define KEYPAD_COLS 2
 #define BUTTON_COUNT 4
 #define BUTTON_EVENT_QUEUE_SIZE 5
 #define BUTTON_DEBOUNCE_MS 35
