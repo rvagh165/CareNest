@@ -10,7 +10,7 @@
 #define OLED_SDA_PIN 8
 #define OLED_SCL_PIN 9
 #define OLED_DC_PIN 18
-#define OLED_RESET_PIN -1
+#define OLED_RESET_PIN 35
 
 // 2x2 Keypad Matrix Pins
 #define KEYPAD_ROW0_PIN 10
