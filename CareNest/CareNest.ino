@@ -14,9 +14,27 @@ static void markActivity(void)
     lastActivityMs = millis();
 }
 
+static const char *buttonName(ButtonId button)
+{
+    if (button == BUTTON_FEED) {
+        return "Feed";
+    } else if (button == BUTTON_DIAPER) {
+        return "Diaper";
+    } else if (button == BUTTON_MENU) {
+        return "Menu";
+    } else if (button == BUTTON_SELECT) {
+        return "Select";
+    }
+
+    return "Unknown";
+}
+
 static void handleButtonEvent(ButtonId button)
 {
     markActivity();
+
+    Serial.print("Button pressed: ");
+    Serial.println(buttonName(button));
 
     if (button == BUTTON_FEED) {
         feedCount++;
