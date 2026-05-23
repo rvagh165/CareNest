@@ -1,5 +1,6 @@
 #include "LCDManager.h"
 #include "config.h"
+#include "StartupAnimation.h"
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -18,6 +19,7 @@ static LcdScreen currentScreen = LCD_SCREEN_SPLASH;
 static LcdScreen returnScreen = LCD_SCREEN_HOME;
 static unsigned long screenStartedMs = 0;
 static unsigned long lastRefreshMs = 0;
+static uint8_t startupFrameIndex = 0;
 static const char *statusMessage = "";
 static bool displayReady = false;
 
@@ -25,18 +27,6 @@ static unsigned int cachedFeedCount = 0;
 static unsigned int cachedDiaperCount = 0;
 static unsigned long cachedLastFeedMs = 0;
 static unsigned long cachedLastDiaperMs = 0;
-
-static void drawBottleLogo(void)
-{
-    display.drawRoundRect(48, 8, 32, 44, 7, SSD1306_WHITE);
-    display.fillRect(56, 4, 16, 6, SSD1306_WHITE);
-    display.drawLine(54, 18, 74, 18, SSD1306_WHITE);
-    display.drawLine(54, 28, 74, 28, SSD1306_WHITE);
-    display.drawLine(54, 38, 74, 38, SSD1306_WHITE);
-    display.fillCircle(42, 20, 2, SSD1306_WHITE);
-    display.fillCircle(86, 18, 2, SSD1306_WHITE);
-    display.fillCircle(88, 42, 1, SSD1306_WHITE);
-}
 
 static void printElapsed(unsigned long eventMs)
 {
@@ -65,11 +55,19 @@ static void printElapsed(unsigned long eventMs)
 
 static void drawSplash(void)
 {
+    const int16_t bitmapX = (SCREEN_WIDTH - STARTUP_ANIMATION_WIDTH) / 2;
+    const int16_t bitmapY = 12 + (startupFrameIndex % 4 == 1 ? -1 : 0);
+    const int16_t pulseX = 34 + (startupFrameIndex * 8);
+
     display.clearDisplay();
-    drawBottleLogo();
-    display.setTextSize(1);
-    display.setCursor(38, 55);
-    display.print("CareNest");
+    display.drawBitmap(bitmapX,
+                       bitmapY,
+                       startupAnimationFrame(startupFrameIndex),
+                       STARTUP_ANIMATION_WIDTH,
+                       STARTUP_ANIMATION_HEIGHT,
+                       SSD1306_WHITE);
+    display.drawLine(34, 52, 94, 52, SSD1306_WHITE);
+    display.fillCircle(pulseX, 52, 2, SSD1306_WHITE);
     display.display();
 }
 
@@ -167,6 +165,7 @@ void lcdManagerBegin(void)
     currentScreen = LCD_SCREEN_SPLASH;
     screenStartedMs = millis();
     lastRefreshMs = 0;
+    startupFrameIndex = 0;
     drawCurrentScreen();
 }
 
@@ -195,6 +194,14 @@ void lcdManagerUpdate(unsigned int feedCount,
         return;
     }
 
+    if (currentScreen == LCD_SCREEN_SPLASH &&
+        (now - lastRefreshMs) >= STARTUP_ANIMATION_FRAME_INTERVAL_MS) {
+        lastRefreshMs = now;
+        startupFrameIndex = (startupFrameIndex + 1) % STARTUP_ANIMATION_FRAME_COUNT;
+        drawSplash();
+        return;
+    }
+
     if (currentScreen == LCD_SCREEN_STATUS &&
         (now - screenStartedMs) >= STATUS_DURATION_MS) {
         currentScreen = returnScreen;
@@ -206,9 +213,7 @@ void lcdManagerUpdate(unsigned int feedCount,
     if (dataChanged || (now - lastRefreshMs) >= SCREEN_REFRESH_MS) {
         lastRefreshMs = now;
 
-        if (currentScreen != LCD_SCREEN_SPLASH) {
-            drawCurrentScreen();
-        }
+        drawCurrentScreen();
     }
 }
 

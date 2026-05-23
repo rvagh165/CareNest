@@ -1,55 +1,8 @@
 #include <Arduino.h>
 #include "Button.h"
 #include "LCDManager.h"
+#include "System.h"
 #include "config.h"
-
-static unsigned long lastActivityMs = 0;
-static unsigned long lastFeedMs = 0;
-static unsigned long lastDiaperMs = 0;
-static unsigned int feedCount = 0;
-static unsigned int diaperCount = 0;
-
-static void markActivity(void)
-{
-    lastActivityMs = millis();
-}
-
-static const char *buttonName(ButtonId button)
-{
-    if (button == BUTTON_FEED) {
-        return "Feed";
-    } else if (button == BUTTON_DIAPER) {
-        return "Diaper";
-    } else if (button == BUTTON_MENU) {
-        return "Menu";
-    } else if (button == BUTTON_SELECT) {
-        return "Select";
-    }
-
-    return "Unknown";
-}
-
-static void handleButtonEvent(ButtonId button)
-{
-    markActivity();
-
-    Serial.print("Button pressed: ");
-    Serial.println(buttonName(button));
-
-    if (button == BUTTON_FEED) {
-        feedCount++;
-        lastFeedMs = millis();
-        lcdManagerShowStatus("Feed saved");
-    } else if (button == BUTTON_DIAPER) {
-        diaperCount++;
-        lastDiaperMs = millis();
-        lcdManagerShowStatus("Diaper saved");
-    } else if (button == BUTTON_MENU) {
-        lcdManagerNextMenuPage();
-    } else if (button == BUTTON_SELECT) {
-        lcdManagerShowStatus("Selected");
-    }
-}
 
 void setup()
 {
@@ -57,8 +10,7 @@ void setup()
 
     buttonsBegin();
     lcdManagerBegin();
-
-    markActivity();
+    systemBegin();
 }
 
 void loop()
@@ -67,13 +19,8 @@ void loop()
 
     buttonsUpdate();
     while (buttonsGetEvent(&pressedButton)) {
-        handleButtonEvent(pressedButton);
+        systemHandleButtonEvent(pressedButton);
     }
 
-    lcdManagerUpdate(feedCount, diaperCount, lastFeedMs, lastDiaperMs);
-
-    if (millis() - lastActivityMs > SLEEP_TIMEOUT_MS) {
-        lcdManagerShowStatus("Idle mode");
-        markActivity();
-    }
+    systemUpdate();
 }
