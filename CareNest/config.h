@@ -13,10 +13,10 @@
 #define OLED_RESET_PIN 35
 
 // 2x2 Keypad Matrix Pins
-#define KEYPAD_ROW0_PIN 10
-#define KEYPAD_ROW1_PIN 11
+#define KEYPAD_ROW0_PIN 13
+#define KEYPAD_ROW1_PIN 10
 #define KEYPAD_COL0_PIN 12
-#define KEYPAD_COL1_PIN 13
+#define KEYPAD_COL1_PIN 11
 
 #define KEYPAD_ROWS 2
 #define KEYPAD_COLS 2
