@@ -56,8 +56,8 @@ void systemUpdate(void)
 {
     lcdManagerUpdate(feedCount, diaperCount, lastFeedMs, lastDiaperMs);
 
-    if (millis() - lastActivityMs > SLEEP_TIMEOUT_MS) {
-        lcdManagerShowStatus("Idle mode");
-        markActivity();
-    }
+    // if (millis() - lastActivityMs > SLEEP_TIMEOUT_MS) {
+    //     lcdManagerShowStatus("Idle mode");
+    //     markActivity();
+    // }
 }
