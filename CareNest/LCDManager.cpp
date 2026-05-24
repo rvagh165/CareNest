@@ -124,7 +124,7 @@ display.fillTriangle(2, 4, 10, 4, 6, 8, SSD1306_WHITE);
 
 // Title
 display.setCursor(18, 2);
-display.print("CareNest Baby");
+display.print("    CareNest ");
 
 // Right heart
 display.fillCircle(116, 3, 2, SSD1306_WHITE);
@@ -148,7 +148,7 @@ display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
     // Count badge (filled, dark text)
     display.fillRoundRect(105, 16, 19, 14, 3, SSD1306_WHITE);
     display.setTextColor(SSD1306_BLACK);
-    display.setCursor(112, 20);
+    display.setCursor(110, 20);
     display.print(cachedFeedCount);
     display.setTextColor(SSD1306_WHITE);
 
@@ -167,7 +167,7 @@ display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
     // Count badge
     display.fillRoundRect(105, 37, 19, 14, 3, SSD1306_WHITE);
     display.setTextColor(SSD1306_BLACK);
-    display.setCursor(112, 41);
+    display.setCursor(110, 41);
     display.print(cachedDiaperCount);
     display.setTextColor(SSD1306_WHITE);
 
@@ -286,18 +286,114 @@ static void drawClock(void)
 
     display.display();
 }
+// ── Helper: draw animated progress bar (call once per lcdManagerUpdate tick)
+// barProgress: 0–120 (pixels filled), drawn at y=60
+
+static void drawStatusProgressBar(uint8_t filledPx)
+{
+    display.drawLine(4, 60, 124, 60, SSD1306_WHITE);   // track
+    if (filledPx > 0) {
+        display.drawLine(4, 61, 4 + filledPx, 61, SSD1306_WHITE); // fill
+        display.drawLine(4, 62, 4 + filledPx, 62, SSD1306_WHITE);
+    }
+}
+
+// ── Context icon helpers (small, fits inside status card area) ──
+
+static void drawIconBottle(uint8_t x, uint8_t y)
+{
+    display.drawRect(x,     y + 3, 10, 11, SSD1306_WHITE); // body
+    display.drawRect(x + 3, y,      4,  4, SSD1306_WHITE); // neck
+    display.drawLine(x, y + 7, x + 9, y + 7, SSD1306_WHITE); // milk line
+}
+
+static void drawIconDiaper(uint8_t x, uint8_t y)
+{
+    display.drawRect(x,     y,      14,  9, SSD1306_WHITE);
+    display.drawLine(x,     y + 9,  x + 4, y + 13, SSD1306_WHITE);
+    display.drawLine(x + 14,y + 9,  x + 10,y + 13, SSD1306_WHITE);
+}
+
+static void drawIconClock(uint8_t cx, uint8_t cy, uint8_t r)
+{
+    display.drawCircle(cx, cy, r, SSD1306_WHITE);
+    display.drawLine(cx, cy, cx,     cy - r + 2, SSD1306_WHITE); // hour
+    display.drawLine(cx, cy, cx + r - 2, cy + 1, SSD1306_WHITE); // minute
+}
+
+static void drawCheckmark(uint8_t cx, uint8_t cy, uint8_t r)
+{
+    display.drawCircle(cx, cy, r, SSD1306_WHITE);
+    // tick: bottom-left leg then up-right leg
+    display.drawLine(cx - r/2,     cy,          cx - r/5, cy + r/2,   SSD1306_WHITE);
+    display.drawLine(cx - r/5,     cy + r/2,    cx + r/2, cy - r/3,   SSD1306_WHITE);
+}
+
+// ── Main drawStatus ─────────────────────────────────────────────
+
 static void drawStatus(void)
 {
     display.clearDisplay();
+    display.setRotation(0);
+    display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1);
-    display.setCursor(0, 0);
+
+    // ── Header (same style as other screens)
+    display.setCursor(2, 1);
     display.print("CareNest");
-    display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
-    display.setCursor(0, 28);
+    display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
+
+    // ── Detect which status message we have ──────────────────────
+    bool isFeed   = (strcmp(statusMessage, "Feed ")   == 0);
+    bool isDiaper = (strcmp(statusMessage, "Diaper ") == 0);
+    bool isSync   = (strcmp(statusMessage, "Time ") == 0);
+
+    // ── Context icon on the left (x=10..23, y=16..32) ───────────
+    if (isFeed) {
+        drawIconBottle(10, 16);
+    } else if (isDiaper) {
+        drawIconDiaper(10, 17);
+    } else if (isSync) {
+        drawIconClock(15, 26, 7);
+    } else {
+        // generic star / diamond for "Selected"
+        display.drawLine(16, 16, 16, 36, SSD1306_WHITE);
+        display.drawLine(8,  26, 24, 26, SSD1306_WHITE);
+        display.drawLine(10, 18, 22, 34, SSD1306_WHITE);
+        display.drawLine(22, 18, 10, 34, SSD1306_WHITE);
+    }
+
+    // ── Message text (right of icon) ────────────────────────────
+    display.setCursor(36, 18);
     display.print(statusMessage);
+
+    // Sub-caption
+    display.setCursor(36, 28);
+    if (isFeed)        display.print("Logged OK");
+    else if (isDiaper) display.print("Logged OK");
+    else if (isSync)   display.print("Sync");
+    else               display.print("Confirmed");
+
+    // ── Checkmark circle (top-right corner) ─────────────────────
+    drawCheckmark(110, 24, 10);
+
+    // ── Divider ──────────────────────────────────────────────────
+    display.drawLine(4, 44, 124, 44, SSD1306_WHITE);
+
+    // ── Return hint ──────────────────────────────────────────────
+    display.setCursor(14, 48);
+    display.print("returning home...");
+
+    // ── Progress bar (animated — driven by lcdManagerUpdate) ─────
+    // Compute how far through the STATUS_DURATION we are
+    uint32_t elapsed = millis() - screenStartedMs;
+    uint32_t total   = STATUS_DISPLAY_MS;          // e.g. 2000
+    if (elapsed > total) elapsed = total;
+    uint8_t filled = (uint8_t)(120UL * (total - elapsed) / total); // counts DOWN
+    drawStatusProgressBar(filled);
+
     display.display();
 }
-
 static void drawCurrentScreen(void)
 {
     if (!displayReady) {

@@ -111,14 +111,14 @@ void systemHandleButtonEvent(ButtonId button)
 
     if (button == BUTTON_FEED) {
         dailyTrackerRecordFeed();
-        lcdManagerShowStatus("Feed saved");
+        lcdManagerShowStatus("Feed ");
     } else if (button == BUTTON_DIAPER) {
         dailyTrackerRecordDiaper();
-        lcdManagerShowStatus("Diaper saved");
+        lcdManagerShowStatus("Diaper ");
     } else if (button == BUTTON_MENU) {
         lcdManagerNextMenuPage();
     } else if (button == BUTTON_SELECT) {
-        lcdManagerShowStatus(rtcIsTimeSet() ? "Time Synced!" : "Selected");
+        lcdManagerShowStatus(rtcIsTimeSet() ? "Time " : "Selected");
     }
 }
 
