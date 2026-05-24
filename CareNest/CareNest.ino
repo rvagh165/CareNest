@@ -3,6 +3,7 @@
 #include "LCDManager.h"
 #include "System.h"
 #include "config.h"
+#include "RTC.h"
 
 void setup()
 {

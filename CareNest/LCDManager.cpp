@@ -1,6 +1,7 @@
 #include "LCDManager.h"
 #include "config.h"
 #include "StartupAnimation.h"
+#include "RTC.h"
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -10,6 +11,7 @@ typedef enum {
     LCD_SCREEN_SPLASH = 0,
     LCD_SCREEN_HOME,
     LCD_SCREEN_TIMERS,
+    LCD_SCREEN_CLOCK,
     LCD_SCREEN_STATUS
 } LcdScreen;
 
@@ -116,6 +118,44 @@ static void drawTimers(void)
     display.display();
 }
 
+static void drawClock(void)
+{
+    DateTime now = rtcGetTime();
+
+    display.clearDisplay();
+    display.setTextSize(1);
+
+    /* Header */
+    display.setCursor(0, 0);
+    display.print("Current Time");
+    display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
+
+    /* Date line - DD/MM/YYYY */
+    display.setCursor(0, 18);
+    display.setTextSize(1);
+    if (now.day() < 10) display.print('0');
+    display.print(now.day());
+    display.print('/');
+    if (now.month() < 10) display.print('0');
+    display.print(now.month());
+    display.print('/');
+    display.print(now.year());
+
+    /* Time line - HH:MM:SS  (larger text) */
+    display.setCursor(10, 38);
+    display.setTextSize(2);
+    if (now.hour() < 10) display.print('0');
+    display.print(now.hour());
+    display.print(':');
+    if (now.minute() < 10) display.print('0');
+    display.print(now.minute());
+    display.print(':');
+    if (now.second() < 10) display.print('0');
+    display.print(now.second());
+
+    display.display();
+}
+
 static void drawStatus(void)
 {
     display.clearDisplay();
@@ -140,6 +180,8 @@ static void drawCurrentScreen(void)
         drawHome();
     } else if (currentScreen == LCD_SCREEN_TIMERS) {
         drawTimers();
+    } else if (currentScreen == LCD_SCREEN_CLOCK) {
+        drawClock();
     } else {
         drawStatus();
     }
@@ -202,6 +244,13 @@ void lcdManagerUpdate(unsigned int feedCount,
         return;
     }
 
+    if (currentScreen == LCD_SCREEN_CLOCK &&
+        (now - lastRefreshMs) >= CLOCK_REFRESH_MS) {
+        lastRefreshMs = now;
+        drawClock();
+        return;
+    }
+
     if (currentScreen == LCD_SCREEN_STATUS &&
         (now - screenStartedMs) >= STATUS_DURATION_MS) {
         currentScreen = returnScreen;
@@ -233,6 +282,8 @@ void lcdManagerNextMenuPage(void)
 {
     if (currentScreen == LCD_SCREEN_HOME) {
         currentScreen = LCD_SCREEN_TIMERS;
+    } else if (currentScreen == LCD_SCREEN_TIMERS) {
+        currentScreen = LCD_SCREEN_CLOCK;
     } else {
         currentScreen = LCD_SCREEN_HOME;
     }
@@ -241,3 +292,4 @@ void lcdManagerNextMenuPage(void)
     screenStartedMs = millis();
     drawCurrentScreen();
 }
+

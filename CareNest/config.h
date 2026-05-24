@@ -29,4 +29,6 @@
 #define SCREEN_REFRESH_MS 250
 #define SLEEP_TIMEOUT_MS 60000UL
 
+#define CLOCK_REFRESH_MS 1000
+
 #endif
