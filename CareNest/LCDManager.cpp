@@ -1,5 +1,6 @@
 #include "LCDManager.h"
 #include "config.h"
+#include "DailyTracker.h"
 #include "StartupAnimation.h"
 #include "RTC.h"
 
@@ -27,20 +28,25 @@ static bool displayReady = false;
 
 static unsigned int cachedFeedCount = 0;
 static unsigned int cachedDiaperCount = 0;
-static unsigned long cachedLastFeedMs = 0;
-static unsigned long cachedLastDiaperMs = 0;
+static uint32_t cachedLastFeedEpoch = 0;
+static uint32_t cachedLastDiaperEpoch = 0;
 
-static void printElapsed(unsigned long eventMs)
+/*
+ * Print elapsed wall-clock time since `epochSec` (Unix epoch seconds).
+ * Uses rtcGetEpoch() so the display is accurate even across reboots.
+ */
+static void printElapsedEpoch(uint32_t epochSec)
 {
-    unsigned long seconds;
-    unsigned long minutes;
+    uint32_t nowEpoch = rtcGetEpoch();
+    uint32_t seconds;
+    uint32_t minutes;
 
-    if (eventMs == 0) {
+    if (epochSec == 0 || nowEpoch < epochSec) {
         display.print("Never");
         return;
     }
 
-    seconds = (millis() - eventMs) / 1000UL;
+    seconds = nowEpoch - epochSec;
     minutes = seconds / 60UL;
 
     if (minutes < 1UL) {
@@ -82,18 +88,18 @@ static void drawHome(void)
     display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
 
     display.setCursor(0, 18);
-    display.print("Feeds today: ");
+    display.print("       Feeds  : ");
     display.print(cachedFeedCount);
 
     display.setCursor(0, 30);
-    display.print("Diapers: ");
+    display.print("      Diapers : ");
     display.print(cachedDiaperCount);
-
+    
     display.setCursor(0, 44);
-    display.print("Menu: next page");
-
+    display.print("        Time   ");
+    
     display.setCursor(0, 56);
-    display.print("Select: confirm");
+    display.print("        Menu   ");
     display.display();
 }
 
@@ -105,17 +111,15 @@ static void drawTimers(void)
     display.print("Last Activity");
     display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
 
-    display.setCursor(0, 20);
-    display.print("Feed: ");
-    printElapsed(cachedLastFeedMs);
+    display.setCursor(0, 28);
+    display.print("Feed   : ");
+    printElapsedEpoch(cachedLastFeedEpoch);
 
-    display.setCursor(0, 34);
-    display.print("Diaper: ");
-    printElapsed(cachedLastDiaperMs);
-
-    display.setCursor(0, 52);
-    display.print("Baby milk tracker");
+    display.setCursor(0, 44);
+    display.print("Diaper : ");
+    printElapsedEpoch(cachedLastDiaperEpoch);
     display.display();
+
 }
 
 static void drawClock(void)
@@ -213,18 +217,18 @@ void lcdManagerBegin(void)
 
 void lcdManagerUpdate(unsigned int feedCount,
                       unsigned int diaperCount,
-                      unsigned long lastFeedMs,
-                      unsigned long lastDiaperMs)
+                      uint32_t lastFeedEpoch,
+                      uint32_t lastDiaperEpoch)
 {
     unsigned long now = millis();
     bool dataChanged = false;
 
     if (cachedFeedCount != feedCount || cachedDiaperCount != diaperCount ||
-        cachedLastFeedMs != lastFeedMs || cachedLastDiaperMs != lastDiaperMs) {
+        cachedLastFeedEpoch != lastFeedEpoch || cachedLastDiaperEpoch != lastDiaperEpoch) {
         cachedFeedCount = feedCount;
         cachedDiaperCount = diaperCount;
-        cachedLastFeedMs = lastFeedMs;
-        cachedLastDiaperMs = lastDiaperMs;
+        cachedLastFeedEpoch = lastFeedEpoch;
+        cachedLastDiaperEpoch = lastDiaperEpoch;
         dataChanged = true;
     }
 

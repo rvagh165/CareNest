@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "Button.h"
+#include "DailyTracker.h"
 #include "LCDManager.h"
 #include "System.h"
 #include "config.h"

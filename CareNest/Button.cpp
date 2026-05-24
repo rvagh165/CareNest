@@ -40,9 +40,9 @@ static ButtonId buttonFromKey(char key)
     } else if (key == '3') {
         return BUTTON_DIAPER;
     } else if (key == '2') {
-        return BUTTON_MENU;
-    } else if (key == '1') {
         return BUTTON_SELECT;
+    } else if (key == '1') {
+        return BUTTON_MENU;
     }
 
     return BUTTON_NONE;

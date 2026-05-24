@@ -1,6 +1,7 @@
 #include "System.h"
 
 #include <Arduino.h>
+#include "DailyTracker.h"
 #include "LCDManager.h"
 #include "RTC.h"
 #include "Variable.h"
@@ -98,6 +99,7 @@ void systemBegin(void)
     markActivity();
     rtcBegin();
     systemSetTimeFromCompileTime();
+    dailyTrackerBegin();
 }
 
 void systemHandleButtonEvent(ButtonId button)
@@ -108,12 +110,10 @@ void systemHandleButtonEvent(ButtonId button)
     Serial.println(buttonName(button));
 
     if (button == BUTTON_FEED) {
-        feedCount++;
-        lastFeedMs = millis();
+        dailyTrackerRecordFeed();
         lcdManagerShowStatus("Feed saved");
     } else if (button == BUTTON_DIAPER) {
-        diaperCount++;
-        lastDiaperMs = millis();
+        dailyTrackerRecordDiaper();
         lcdManagerShowStatus("Diaper saved");
     } else if (button == BUTTON_MENU) {
         lcdManagerNextMenuPage();
@@ -125,8 +125,12 @@ void systemHandleButtonEvent(ButtonId button)
 void systemUpdate(void)
 {
     rtcUpdate();
+    dailyTrackerUpdate();
 
-    lcdManagerUpdate(feedCount, diaperCount, lastFeedMs, lastDiaperMs);
+    lcdManagerUpdate(dailyTrackerGetFeedCount(),
+                     dailyTrackerGetDiaperCount(),
+                     dailyTrackerGetLastFeedEpoch(),
+                     dailyTrackerGetLastDiaperEpoch());
 
     // if (millis() - lastActivityMs > SLEEP_TIMEOUT_MS) {
     //     lcdManagerShowStatus("Idle mode");

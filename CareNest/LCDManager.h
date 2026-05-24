@@ -6,8 +6,8 @@
 void lcdManagerBegin(void);
 void lcdManagerUpdate(unsigned int feedCount,
                       unsigned int diaperCount,
-                      unsigned long lastFeedMs,
-                      unsigned long lastDiaperMs);
+                      uint32_t lastFeedEpoch,
+                      uint32_t lastDiaperEpoch);
 void lcdManagerShowStatus(const char *message);
 void lcdManagerNextMenuPage(void);
 
