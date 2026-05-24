@@ -79,76 +79,197 @@ static void drawSplash(void)
     display.display();
 }
 
+// static void drawHome(void)
+// {
+//     display.clearDisplay();
+//     display.setTextSize(1);
+//     display.setCursor(0, 0);
+//     display.print("CareNest Baby Care");
+//     display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
+
+//     display.setCursor(0, 18);
+//     display.print("       Feeds  : ");
+//     display.print(cachedFeedCount);
+
+//     display.setCursor(0, 30);
+//     display.print("       Diaper : ");
+//     display.print(cachedDiaperCount);
+    
+//     display.setCursor(0, 44);
+//     display.print("        Time   ");
+    
+//     display.setCursor(0, 56);
+//     display.print("        Menu   ");
+//     display.display();
+// }
+
+// ─── drawHome ───────────────────────────────────────────────────
+// Physical display: 128×64 px, rotated 90° → portrait 64w × 128h
+// This code targets the NON-rotated (landscape) coordinate system.
+// setRotation(0) — draw in native 128w × 64h space.
+
 static void drawHome(void)
 {
     display.clearDisplay();
-    display.setTextSize(1);
-    display.setCursor(0, 0);
-    display.print("CareNest Baby Care");
-    display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
+    display.setRotation(0);          // native landscape: 128×64
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(1);          // 6×8px per char at size 1
 
-    display.setCursor(0, 18);
-    display.print("       Feeds  : ");
+// ── HEADER ──────────────────────────────── y = 0..11
+
+// Left heart (two small circles + triangle = classic pixel heart)
+display.fillCircle(4, 3, 2, SSD1306_WHITE);
+display.fillCircle(8, 3, 2, SSD1306_WHITE);
+display.fillTriangle(2, 4, 10, 4, 6, 8, SSD1306_WHITE);
+
+// Title
+display.setCursor(18, 2);
+display.print("CareNest Baby");
+
+// Right heart
+display.fillCircle(116, 3, 2, SSD1306_WHITE);
+display.fillCircle(120, 3, 2, SSD1306_WHITE);
+display.fillTriangle(114, 4, 122, 4, 118, 8, SSD1306_WHITE);
+
+display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
+
+    // ── FEEDS CARD ─────────────────────── y = 14..32  (h=18)
+    display.drawRoundRect(2, 14, 124, 18, 3, SSD1306_WHITE);
+
+    // Bottle icon  x=7, y=17  (7w × 13h fits inside card)
+    display.drawRect(7, 20, 8, 9, SSD1306_WHITE);   // body
+    display.drawRect(9, 17, 4, 3, SSD1306_WHITE);   // neck
+    display.drawLine(8, 23, 15, 23, SSD1306_WHITE); // milk line
+
+    // Label
+    display.setCursor(22, 18);
+    display.print("Feeds ");
+
+    // Count badge (filled, dark text)
+    display.fillRoundRect(105, 16, 19, 14, 3, SSD1306_WHITE);
+    display.setTextColor(SSD1306_BLACK);
+    display.setCursor(112, 20);
     display.print(cachedFeedCount);
+    display.setTextColor(SSD1306_WHITE);
 
-    display.setCursor(0, 30);
-    display.print("      Diapers : ");
+    // ── DIAPER CARD ────────────────────── y = 35..52  (h=18)
+    display.drawRoundRect(2, 35, 124, 18, 3, SSD1306_WHITE);
+
+    // Diaper icon x=7, y=38
+    display.drawRect(7, 38, 12, 8, SSD1306_WHITE);
+    display.drawLine(7,  46, 10, 50, SSD1306_WHITE);
+    display.drawLine(19, 46, 16, 50, SSD1306_WHITE);
+
+    // Label
+    display.setCursor(22, 39);
+    display.print("Diaper Change");
+
+    // Count badge
+    display.fillRoundRect(105, 37, 19, 14, 3, SSD1306_WHITE);
+    display.setTextColor(SSD1306_BLACK);
+    display.setCursor(112, 41);
     display.print(cachedDiaperCount);
-    
-    display.setCursor(0, 44);
-    display.print("        Time   ");
-    
-    display.setCursor(0, 56);
-    display.print("        Menu   ");
+    display.setTextColor(SSD1306_WHITE);
+
+    // ── FOOTER BUTTONS ─────────────────── y = 55..63  (h=9)
+    // display.drawLine(0, 54, 127, 54, SSD1306_WHITE);
+
+    // TIME button (outline)
+    display.drawRoundRect(2, 55, 58, 9, 2, SSD1306_WHITE);
+    // clock icon
+    display.drawCircle(9, 59, 3, SSD1306_WHITE);
+    display.drawLine(9, 59, 9, 57, SSD1306_WHITE);
+    display.drawLine(9, 59, 11, 60, SSD1306_WHITE);
+    display.setCursor(16, 56);
+    display.print("Time");
+
+    // MENU button (filled)
+    display.fillRoundRect(68, 55, 58, 9, 2, SSD1306_WHITE);
+    display.setTextColor(SSD1306_BLACK);
+    // hamburger icon
+    display.drawLine(73, 57, 79, 57, SSD1306_BLACK);
+    display.drawLine(73, 59, 79, 59, SSD1306_BLACK);
+    display.drawLine(73, 61, 79, 61, SSD1306_BLACK);
+    display.setCursor(84, 56);
+    display.print("Menu");
+    display.setTextColor(SSD1306_WHITE);
+
     display.display();
 }
 
+
+// ─── drawTimers ─────────────────────────────────────────────────
 static void drawTimers(void)
 {
     display.clearDisplay();
+    display.setRotation(0);
+    display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1);
-    display.setCursor(0, 0);
+
+    // Header
+    display.setCursor(2, 1);
     display.print("Last Activity");
-    display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
+    display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
 
-    display.setCursor(0, 28);
-    display.print("Feed   : ");
-    printElapsedEpoch(cachedLastFeedEpoch);
+    // ── Feed row ─── y=14..30
+    display.drawRoundRect(2, 14, 124, 18, 3, SSD1306_WHITE);
+    // Bottle icon (small)
+    display.drawRect(6, 18, 7, 9, SSD1306_WHITE);
+    display.drawRect(8, 16, 3, 2, SSD1306_WHITE);
 
-    display.setCursor(0, 44);
-    display.print("Diaper : ");
+    display.setCursor(20, 15);
+    display.print("Last Feed");
+    display.setCursor(20, 24);
+    printElapsedEpoch(cachedLastFeedEpoch);   // prints "2h 14m ago" etc.
+
+    // ── Diaper row ─── y=34..50
+    display.drawRoundRect(2, 34, 124, 18, 3, SSD1306_WHITE);
+    display.drawRect(6, 38, 10, 7, SSD1306_WHITE);
+    display.drawLine(6,  45, 9,  49, SSD1306_WHITE);
+    display.drawLine(16, 45, 13, 49, SSD1306_WHITE);
+
+    display.setCursor(20, 35);
+    display.print("Last Diaper");
+    display.setCursor(20, 44);
     printElapsedEpoch(cachedLastDiaperEpoch);
-    display.display();
 
+    // Back hint
+    display.setCursor(18, 56);
+    display.print("< back to home >");
+
+    display.display();
 }
 
+
+// ─── drawClock ──────────────────────────────────────────────────
 static void drawClock(void)
 {
     DateTime now = rtcGetTime();
 
     display.clearDisplay();
+    display.setRotation(0);
+    display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1);
 
-    /* Header */
-    display.setCursor(0, 0);
+    // Header
+    display.setCursor(2, 1);
     display.print("Current Time");
-    display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
+    display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
 
-    /* Date line - DD/MM/YYYY */
-    display.setCursor(0, 18);
-    display.setTextSize(1);
-    if (now.day() < 10) display.print('0');
+    // Date  DD / MM / YYYY  at y=18
+    display.setCursor(22, 18);
+    if (now.day()   < 10) display.print('0');
     display.print(now.day());
-    display.print('/');
+    display.print(" / ");
     if (now.month() < 10) display.print('0');
     display.print(now.month());
-    display.print('/');
+    display.print(" / ");
     display.print(now.year());
 
-    /* Time line - HH:MM:SS  (larger text) */
-    display.setCursor(10, 38);
+    // Time  HH:MM:SS  at y=32 with textSize 2 (12×16px per char)
     display.setTextSize(2);
-    if (now.hour() < 10) display.print('0');
+    display.setCursor(4, 32);
+    if (now.hour()   < 10) display.print('0');
     display.print(now.hour());
     display.print(':');
     if (now.minute() < 10) display.print('0');
@@ -157,9 +278,14 @@ static void drawClock(void)
     if (now.second() < 10) display.print('0');
     display.print(now.second());
 
+    // Bottom decoration
+    display.setTextSize(1);
+    display.drawLine(8,  60, 48,  60, SSD1306_WHITE);
+    display.drawLine(80, 60, 120, 60, SSD1306_WHITE);
+    display.fillTriangle(60, 58, 68, 58, 64, 63, SSD1306_WHITE); // small heart-like
+
     display.display();
 }
-
 static void drawStatus(void)
 {
     display.clearDisplay();
