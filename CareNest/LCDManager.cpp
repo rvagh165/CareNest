@@ -63,19 +63,19 @@ static void printElapsedEpoch(uint32_t epochSec)
 
 static void drawSplash(void)
 {
-    const int16_t bitmapX = (SCREEN_WIDTH - STARTUP_ANIMATION_WIDTH) / 2;
-    const int16_t bitmapY = 12 + (startupFrameIndex % 4 == 1 ? -1 : 0);
+    // const int16_t bitmapX = (SCREEN_WIDTH - STARTUP_ANIMATION_WIDTH) / 2;
+    // const int16_t bitmapY = 12 + (startupFrameIndex % 4 == 1 ? -1 : 0);
     const int16_t pulseX = 34 + (startupFrameIndex * 8);
 
     display.clearDisplay();
-    display.drawBitmap(bitmapX,
-                       bitmapY,
+    display.drawBitmap(0,
+                       0,
                        startupAnimationFrame(startupFrameIndex),
                        STARTUP_ANIMATION_WIDTH,
                        STARTUP_ANIMATION_HEIGHT,
                        SSD1306_WHITE);
-    display.drawLine(34, 52, 94, 52, SSD1306_WHITE);
-    display.fillCircle(pulseX, 52, 2, SSD1306_WHITE);
+    // display.drawLine(34, 52, 94, 52, SSD1306_WHITE);
+    // display.fillCircle(pulseX, 52, 2, SSD1306_WHITE);
     display.display();
 }
 
