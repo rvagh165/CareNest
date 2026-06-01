@@ -7,7 +7,7 @@
 #include "RTC.h"
 
 static const uint16_t DNS_PORT = 53;
-static const char *AP_SSID = "CareNes";
+static const char *AP_SSID = "CareNest";
 
 static DNSServer dnsServer;
 static WebServer webServer(80);

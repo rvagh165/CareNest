@@ -280,11 +280,27 @@ static void drawClock(void)
     if (now.second() < 10) display.print('0');
     display.print(now.second());
 
-    // Bottom decoration
+    // Footer buttons (like Home screen)
     display.setTextSize(1);
-    display.drawLine(8,  60, 48,  60, SSD1306_WHITE);
-    display.drawLine(80, 60, 120, 60, SSD1306_WHITE);
-    display.fillTriangle(60, 58, 68, 58, 64, 63, SSD1306_WHITE); // small heart-like
+
+    // HOME button (outline)
+    display.drawRoundRect(2, 55, 58, 9, 2, SSD1306_WHITE);
+    // simple house icon
+    display.drawTriangle(9, 60, 13, 56, 17, 60, SSD1306_WHITE);
+    display.drawRect(11, 60, 5, 4, SSD1306_WHITE);
+    display.setCursor(20, 56);
+    display.print("Home");
+
+    // SYNC button (filled) - Menu triggers sync/AP mode
+    display.fillRoundRect(68, 55, 58, 9, 2, SSD1306_WHITE);
+    display.setTextColor(SSD1306_BLACK);
+    // sync icon
+    display.drawCircle(75, 59, 3, SSD1306_BLACK);
+    display.drawLine(75, 56, 77, 58, SSD1306_BLACK);
+    display.drawLine(75, 56, 73, 58, SSD1306_BLACK);
+    display.setCursor(84, 56);
+    display.print("Sync");
+    display.setTextColor(SSD1306_WHITE);
 
     display.display();
 }
@@ -306,7 +322,7 @@ static void drawApMode(void)
     display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
 
     display.setCursor(2, 18);
-    display.print("WiFi: CareNes");
+    display.print("WiFi: CareNest");
 
     display.setCursor(2, 30);
     display.print("Open: 192.168.4.1");
