@@ -268,7 +268,7 @@ static void drawClock(void)
 
     // Time  HH:MM:SS  at y=32 with textSize 2 (12×16px per char)
     display.setTextSize(2);
-    display.setCursor(4, 32);
+    display.setCursor(17, 32);
     if (now.hour()   < 10) display.print('0');
     display.print(now.hour());
     display.print(':');
@@ -508,9 +508,9 @@ void lcdManagerNextMenuPage(void)
 {
     if (currentScreen == LCD_SCREEN_HOME) {
         currentScreen = LCD_SCREEN_TIMERS;
-    } else if (currentScreen == LCD_SCREEN_TIMERS) {
-        currentScreen = LCD_SCREEN_CLOCK;
-    } else {
+    }
+    else 
+    {
         currentScreen = LCD_SCREEN_HOME;
     }
 
@@ -519,3 +519,21 @@ void lcdManagerNextMenuPage(void)
     drawCurrentScreen();
 }
 
+void lcdManagerShowClock(void)
+{
+    if(currentScreen == LCD_SCREEN_HOME)
+    {
+    currentScreen = LCD_SCREEN_CLOCK;
+    drawCurrentScreen();
+    }
+    else 
+    {
+        currentScreen = LCD_SCREEN_HOME;
+    }
+    
+    returnScreen = currentScreen;
+    screenStartedMs = millis();
+    drawCurrentScreen();
+
+
+}

@@ -10,5 +10,5 @@ void lcdManagerUpdate(unsigned int feedCount,
                       uint32_t lastDiaperEpoch);
 void lcdManagerShowStatus(const char *message);
 void lcdManagerNextMenuPage(void);
-
+void lcdManagerShowClock(void);
 #endif

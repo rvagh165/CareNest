@@ -118,7 +118,7 @@ void systemHandleButtonEvent(ButtonId button)
     } else if (button == BUTTON_MENU) {
         lcdManagerNextMenuPage();
     } else if (button == BUTTON_SELECT) {
-        lcdManagerShowStatus(rtcIsTimeSet() ? "Time " : "Selected");
+        lcdManagerShowClock();
     }
 }
 
