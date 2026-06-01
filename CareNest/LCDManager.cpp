@@ -13,6 +13,7 @@ typedef enum {
     LCD_SCREEN_HOME,
     LCD_SCREEN_TIMERS,
     LCD_SCREEN_CLOCK,
+    LCD_SCREEN_AP_MODE,
     LCD_SCREEN_STATUS
 } LcdScreen;
 
@@ -24,6 +25,7 @@ static unsigned long screenStartedMs = 0;
 static unsigned long lastRefreshMs = 0;
 static uint8_t startupFrameIndex = 0;
 static const char *statusMessage = "";
+static uint32_t apRemainingMs = 0;
 static bool displayReady = false;
 
 static unsigned int cachedFeedCount = 0;
@@ -286,6 +288,42 @@ static void drawClock(void)
 
     display.display();
 }
+
+static void drawApMode(void)
+{
+    uint32_t remaining = apRemainingMs;
+    uint32_t seconds = remaining / 1000UL;
+    uint32_t mm = seconds / 60UL;
+    uint32_t ss = seconds % 60UL;
+
+    display.clearDisplay();
+    display.setRotation(0);
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(1);
+
+    display.setCursor(2, 1);
+    display.print("CareNest - AP Mode");
+    display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
+
+    display.setCursor(2, 18);
+    display.print("WiFi: CareNes");
+
+    display.setCursor(2, 30);
+    display.print("Open: 192.168.4.1");
+
+    display.setCursor(2, 42);
+    display.print("Select TZ + Set Time");
+
+    display.setCursor(2, 54);
+    display.print("Timeout: ");
+    if (mm < 10) display.print('0');
+    display.print(mm);
+    display.print(':');
+    if (ss < 10) display.print('0');
+    display.print(ss);
+
+    display.display();
+}
 // ── Helper: draw animated progress bar (call once per lcdManagerUpdate tick)
 // barProgress: 0–120 (pixels filled), drawn at y=60
 
@@ -408,6 +446,8 @@ static void drawCurrentScreen(void)
         drawTimers();
     } else if (currentScreen == LCD_SCREEN_CLOCK) {
         drawClock();
+    } else if (currentScreen == LCD_SCREEN_AP_MODE) {
+        drawApMode();
     } else {
         drawStatus();
     }
@@ -477,6 +517,13 @@ void lcdManagerUpdate(unsigned int feedCount,
         return;
     }
 
+    if (currentScreen == LCD_SCREEN_AP_MODE &&
+        (now - lastRefreshMs) >= 1000UL) {
+        lastRefreshMs = now;
+        drawApMode();
+        return;
+    }
+
     if (currentScreen == LCD_SCREEN_STATUS &&
         (now - screenStartedMs) >= STATUS_DURATION_MS) {
         currentScreen = returnScreen;
@@ -536,4 +583,36 @@ void lcdManagerShowClock(void)
     drawCurrentScreen();
 
 
+}
+
+bool lcdManagerIsClockScreen(void)
+{
+    return currentScreen == LCD_SCREEN_CLOCK;
+}
+
+void lcdManagerShowApMode(uint32_t remainingMs)
+{
+    apRemainingMs = remainingMs;
+    currentScreen = LCD_SCREEN_AP_MODE;
+    screenStartedMs = millis();
+    lastRefreshMs = 0;
+    drawCurrentScreen();
+}
+
+void lcdManagerUpdateApRemaining(uint32_t remainingMs)
+{
+    apRemainingMs = remainingMs;
+}
+
+bool lcdManagerIsApModeScreen(void)
+{
+    return currentScreen == LCD_SCREEN_AP_MODE;
+}
+
+void lcdManagerShowHome(void)
+{
+    currentScreen = LCD_SCREEN_HOME;
+    returnScreen = currentScreen;
+    screenStartedMs = millis();
+    drawCurrentScreen();
 }

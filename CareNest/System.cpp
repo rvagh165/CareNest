@@ -5,11 +5,13 @@
 #include "LCDManager.h"
 #include "RTC.h"
 #include "Variable.h"
+#include "CaptivePortal.h"
 #include "config.h"
 
 /* ------------------------------------------------------------------ */
 /*  Static state                                                      */
 /* ------------------------------------------------------------------ */
+static bool wasPortalRunning = false;
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -109,6 +111,11 @@ void systemHandleButtonEvent(ButtonId button)
     Serial.print("Button pressed: ");
     Serial.println(buttonName(button));
 
+    if (captivePortalIsRunning()) {
+        // Keep the user on the AP instructions screen while captive portal is active.
+        return;
+    }
+
     if (button == BUTTON_FEED) {
         dailyTrackerRecordFeed();
         lcdManagerShowStatus("Feed ");
@@ -116,7 +123,12 @@ void systemHandleButtonEvent(ButtonId button)
         dailyTrackerRecordDiaper();
         lcdManagerShowStatus("Diaper ");
     } else if (button == BUTTON_MENU) {
-        lcdManagerNextMenuPage();
+        if (lcdManagerIsClockScreen()) {
+            captivePortalStart();
+            lcdManagerShowApMode(captivePortalRemainingMs());
+        } else {
+            lcdManagerNextMenuPage();
+        }
     } else if (button == BUTTON_SELECT) {
         lcdManagerShowClock();
     }
@@ -124,6 +136,25 @@ void systemHandleButtonEvent(ButtonId button)
 
 void systemUpdate(void)
 {
+    captivePortalUpdate();
+
+    bool portalRunning = captivePortalIsRunning();
+    if (portalRunning) {
+        lcdManagerUpdateApRemaining(captivePortalRemainingMs());
+        if (!lcdManagerIsApModeScreen()) {
+            lcdManagerShowApMode(captivePortalRemainingMs());
+        }
+    } else if (wasPortalRunning) {
+        // Portal just stopped (either time was set or it timed out)
+        lcdManagerShowHome();
+        if (captivePortalWasTimeSet()) {
+            lcdManagerShowStatus("Time set");
+        } else {
+            lcdManagerShowStatus("AP timeout");
+        }
+    }
+    wasPortalRunning = portalRunning;
+
     rtcUpdate();
     dailyTrackerUpdate();
 
