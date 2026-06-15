@@ -32,4 +32,16 @@
 #define CLOCK_REFRESH_MS 1000
 #define STATUS_DISPLAY_MS 3000
 
+// --- SD Card configuration ---
+// Physical pins for SD (set according to wiring):
+// CLK = SD_CLK_PIN (SCK), CMD = SD_CMD_PIN (MOSI), D0 = SD_D0_PIN (MISO)
+#define SD_CLK_PIN 6
+#define SD_CMD_PIN 7
+#define SD_D0_PIN 5
+// Chip select (CS/SS) pin for the SD card. Update if wired differently.
+#define SD_CS_PIN 36
+
+// Optional: if you want to use the default SPI pins, comment out REASSIGN_SD_PINS
+#define REASSIGN_SD_PINS 1
+
 #endif

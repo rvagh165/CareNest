@@ -7,11 +7,13 @@
 #include "Variable.h"
 #include "CaptivePortal.h"
 #include "config.h"
+#include "SDManager.h"
 
 /* ------------------------------------------------------------------ */
 /*  Static state                                                      */
 /* ------------------------------------------------------------------ */
 static bool wasPortalRunning = false;
+static bool isOnClockPage = false;
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -102,6 +104,7 @@ void systemBegin(void)
     rtcBegin();
     systemSetTimeFromCompileTime();
     dailyTrackerBegin();
+    sdBegin();
 }
 
 void systemHandleButtonEvent(ButtonId button)
@@ -119,9 +122,13 @@ void systemHandleButtonEvent(ButtonId button)
     if (button == BUTTON_FEED) {
         dailyTrackerRecordFeed();
         lcdManagerShowStatus("Feed ");
+        sdLogEvent("Feed");
+        isOnClockPage = false;
     } else if (button == BUTTON_DIAPER) {
         dailyTrackerRecordDiaper();
         lcdManagerShowStatus("Diaper ");
+        sdLogEvent("Diaper");
+        isOnClockPage = false;
     } else if (button == BUTTON_MENU) {
         if (lcdManagerIsClockScreen()) {
             captivePortalStart();
