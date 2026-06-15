@@ -14,5 +14,6 @@ typedef enum {
 void buttonsBegin(void);
 void buttonsUpdate(void);
 bool buttonsGetEvent(ButtonId *button);
+bool buttonsPrepareForDeepSleepWake(void);
 
 #endif

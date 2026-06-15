@@ -1,6 +1,7 @@
 #include "System.h"
 
 #include <Arduino.h>
+#include <esp_sleep.h>
 #include "DailyTracker.h"
 #include "LCDManager.h"
 #include "RTC.h"
@@ -22,6 +23,34 @@ static bool isOnClockPage = false;
 static void markActivity(void)
 {
     lastActivityMs = millis();
+}
+
+static void logWakeupReason(void)
+{
+    esp_sleep_wakeup_cause_t wakeupCause = esp_sleep_get_wakeup_cause();
+
+    if (wakeupCause == ESP_SLEEP_WAKEUP_EXT1) {
+        Serial.println(F("[System] Woke from deep sleep by button press"));
+    } else if (wakeupCause != ESP_SLEEP_WAKEUP_UNDEFINED) {
+        Serial.printf("[System] Wakeup cause: %d\n", (int)wakeupCause);
+    }
+}
+
+static void systemEnterDeepSleep(void)
+{
+    if (!buttonsPrepareForDeepSleepWake()) {
+        Serial.println(F("[System] Deep sleep skipped: keypad wake setup failed"));
+        markActivity();
+        return;
+    }
+
+    Serial.println(F("[System] Entering deep sleep - showing animation"));
+    // Show sleeping animation for 2 seconds before sleeping to ensure user sees it.
+    // Non-blocking alternative: set a flag and let lcdManagerUpdate handle it.
+    lcdManagerShowSleepAnimation(2000, 100);
+
+    delay(50);
+    esp_deep_sleep_start();
 }
 
 static const char *buttonName(ButtonId button)
@@ -100,6 +129,7 @@ static void systemSetTimeFromCompileTime(void)
 
 void systemBegin(void)
 {
+    logWakeupReason();
     markActivity();
     rtcBegin();
     systemSetTimeFromCompileTime();
@@ -153,6 +183,7 @@ void systemUpdate(void)
         }
     } else if (wasPortalRunning) {
         // Portal just stopped (either time was set or it timed out)
+        markActivity();
         lcdManagerShowHome();
         if (captivePortalWasTimeSet()) {
             lcdManagerShowStatus("Time set");
@@ -170,8 +201,7 @@ void systemUpdate(void)
                      dailyTrackerGetLastFeedEpoch(),
                      dailyTrackerGetLastDiaperEpoch());
 
-    // if (millis() - lastActivityMs > SLEEP_TIMEOUT_MS) {
-    //     lcdManagerShowStatus("Idle mode");
-    //     markActivity();
-    // }
+    if (!portalRunning && (millis() - lastActivityMs) >= SLEEP_TIMEOUT_MS) {
+        systemEnterDeepSleep();
+    }
 }

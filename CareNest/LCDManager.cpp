@@ -3,6 +3,7 @@
 #include "DailyTracker.h"
 #include "StartupAnimation.h"
 #include "RTC.h"
+#include "sleeping_animation.h" // include generated frames
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -478,19 +479,13 @@ void lcdManagerBegin(void)
     Wire.begin(OLED_SDA_PIN, OLED_SCL_PIN);
 
     if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS)) {
-        Serial.println("OLED init failed");
-        displayReady = false;
-        return;
+        Serial.println(F("SSD1306 allocation failed"));
+        for (;;);
     }
-
-    displayReady = true;
+    display.setRotation(0);
     display.clearDisplay();
-    display.setTextColor(SSD1306_WHITE);
-    currentScreen = LCD_SCREEN_SPLASH;
-    screenStartedMs = millis();
-    lastRefreshMs = 0;
-    startupFrameIndex = 0;
-    drawCurrentScreen();
+    display.display();
+    displayReady = true;
 }
 
 void lcdManagerUpdate(unsigned int feedCount,
@@ -631,4 +626,27 @@ void lcdManagerShowHome(void)
     returnScreen = currentScreen;
     screenStartedMs = millis();
     drawCurrentScreen();
+}
+
+void lcdManagerShowSleepAnimation(uint32_t durationMs, uint16_t frameDelayMs)
+{
+    if (!displayReady) return;
+
+    const uint8_t* frames[] = {
+        frame0, frame1, frame2, frame3, frame4, frame5, frame6, frame7,
+        frame8, frame9, frame10, frame11, frame12, frame13, frame14, frame15,
+        frame16, frame17, frame18, frame19, frame20, frame21, frame22, frame23,
+        frame24, frame25, frame26, frame27
+    };
+    const uint8_t numFrames = sizeof(frames) / sizeof(frames[0]);
+
+    uint32_t start = millis();
+    uint8_t idx = 0;
+    while ((millis() - start) < durationMs) {
+        display.clearDisplay();
+        display.drawBitmap(0, 0, frames[idx], SCREEN_WIDTH, SCREEN_HEIGHT, SSD1306_WHITE);
+        display.display();
+        idx = (idx + 1) % numFrames;
+        delay(frameDelayMs);
+    }
 }
