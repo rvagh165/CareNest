@@ -159,7 +159,7 @@ void systemHandleButtonEvent(ButtonId button)
     if (button == BUTTON_FEED) {
         dailyTrackerRecordFeed();
         lcdManagerShowStatus("Logging Feed...");
-        if (!sdLogEvent("Feed")) {
+        if (!sdLogEvent("Feed ")) {
             const char* err = sdGetLastError();
             if (err) {
                 lcdManagerShowStatus(err);
@@ -167,13 +167,13 @@ void systemHandleButtonEvent(ButtonId button)
                 lcdManagerShowStatus("SD write failed");
             }
         } else {
-            lcdManagerShowStatus("Feed logged");
+            lcdManagerShowStatus("Feed ");
         }
         isOnClockPage = false;
     } else if (button == BUTTON_DIAPER) {
         dailyTrackerRecordDiaper();
         lcdManagerShowStatus("Logging Diaper...");
-        if (!sdLogEvent("Diaper")) {
+        if (!sdLogEvent("Diaper ")) {
             const char* err = sdGetLastError();
             if (err) {
                 lcdManagerShowStatus(err);
@@ -181,7 +181,7 @@ void systemHandleButtonEvent(ButtonId button)
                 lcdManagerShowStatus("SD write failed");
             }
         } else {
-            lcdManagerShowStatus("Diaper logged");
+            lcdManagerShowStatus("Diaper ");
         }
         isOnClockPage = false;
     } else if (button == BUTTON_MENU) {
