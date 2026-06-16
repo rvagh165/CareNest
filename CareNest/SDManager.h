@@ -10,4 +10,7 @@ void sdEnd(void);
 // Returns true on success.
 bool sdLogEvent(const char *action);
 
+// If sdLogEvent fails, use this to retrieve a short error message (persistent until next call)
+const char* sdGetLastError(void);
+
 #endif // SDMANAGER_H

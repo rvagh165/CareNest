@@ -7,6 +7,7 @@
 #include "SD_MMC.h"
 
 static bool isInitialized = false;
+static char lastErrorMsg[128] = "";
 
 static String makeFilenameForToday()
 {
@@ -92,20 +93,50 @@ bool sdBegin(void)
 
 void sdEnd(void)
 {
-    if (!isInitialized) return;
-    SD_MMC.end();
-    isInitialized = false;
+    // Allow sdEnd to forcibly end mount if active
+    if (isInitialized) {
+        SD_MMC.end();
+        isInitialized = false;
+    }
+}
+
+const char* sdGetLastError(void)
+{
+    return lastErrorMsg[0] ? lastErrorMsg : nullptr;
 }
 
 bool sdLogEvent(const char *action)
 {
-    if (!isInitialized) {
-        if (!sdBegin()) return false;
+    // Clear last error
+    lastErrorMsg[0] = '\0';
+
+    // Mount per-operation to minimize risk of corruption if card removed
+#ifdef SD_CLK_PIN
+    if (!SD_MMC.setPins(SD_CLK_PIN, SD_CMD_PIN, SD_D0_PIN)) {
+        // not fatal; log for debug
+        Serial.println(F("[SD] SD_MMC.setPins failed (non-fatal)"));
+    }
+#endif
+
+    if (!SD_MMC.begin("/sdcard", true)) {
+        Serial.println(F("[SD] Card Mount Failed (sdLogEvent)"));
+        strncpy(lastErrorMsg, "SD mount failed", sizeof(lastErrorMsg)-1);
+        SD_MMC.end();
+        return false;
+    }
+
+    uint8_t cardType = SD_MMC.cardType();
+    if (cardType == CARD_NONE) {
+        Serial.println(F("[SD] No SD card attached (sdLogEvent)"));
+        strncpy(lastErrorMsg, "No SD card", sizeof(lastErrorMsg)-1);
+        SD_MMC.end();
+        return false;
     }
 
     // Ensure directory
     if (!ensureDirectoryExists("/CareNest")) {
-        sdEnd();
+        strncpy(lastErrorMsg, "Failed create dir", sizeof(lastErrorMsg)-1);
+        SD_MMC.end();
         return false;
     }
 
@@ -118,7 +149,8 @@ bool sdLogEvent(const char *action)
         if (!f) {
             Serial.print(F("[SD] Failed to create file: "));
             Serial.println(filepath);
-            sdEnd();
+            strncpy(lastErrorMsg, "Create file failed", sizeof(lastErrorMsg)-1);
+            SD_MMC.end();
             return false;
         }
         f.println("date,time,action");
@@ -138,16 +170,24 @@ bool sdLogEvent(const char *action)
         if (!f2) {
             Serial.print(F("[SD] Fallback open failed: "));
             Serial.println(filepath);
-            sdEnd();
+            strncpy(lastErrorMsg, "Open file failed", sizeof(lastErrorMsg)-1);
+            SD_MMC.end();
             return false;
         }
         // write header then the line
         f2.println("date,time,action");
-        f2.print(line);
+        if (f2.print(line) == 0) {
+            Serial.println(F("[SD] Fallback write failed"));
+            strncpy(lastErrorMsg, "Write failed", sizeof(lastErrorMsg)-1);
+            f2.close();
+            SD_MMC.end();
+            return false;
+        }
         f2.close();
 
         Serial.print(F("[SD] Wrote via fallback to: "));
         Serial.println(filepath);
+        SD_MMC.end();
         return true;
     }
 
@@ -157,12 +197,16 @@ bool sdLogEvent(const char *action)
 
     if (written == 0) {
         Serial.println(F("[SD] Write failed"));
-        sdEnd();
+        strncpy(lastErrorMsg, "Write failed", sizeof(lastErrorMsg)-1);
+        SD_MMC.end();
         return false;
     }
 
     Serial.print(F("[SD] Logged: "));
     Serial.println(line);
+
+    // Unmount the card after successful write to reduce corruption risk
+    SD_MMC.end();
 
     return true;
 }

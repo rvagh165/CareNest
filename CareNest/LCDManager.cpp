@@ -552,14 +552,16 @@ void lcdManagerUpdate(unsigned int feedCount,
 
 void lcdManagerShowStatus(const char *message)
 {
-    if (currentScreen != LCD_SCREEN_STATUS) {
-        returnScreen = currentScreen;
-    }
-
     statusMessage = message;
     currentScreen = LCD_SCREEN_STATUS;
     screenStartedMs = millis();
-    drawCurrentScreen();
+
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+    display.setCursor(0, 20);
+    display.print(message);
+    display.display();
 }
 
 void lcdManagerNextMenuPage(void)
