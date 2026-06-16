@@ -144,8 +144,15 @@ void systemHandleButtonEvent(ButtonId button)
     Serial.print("Button pressed: ");
     Serial.println(buttonName(button));
 
+    // If MENU button pressed while on AP mode, close it and go home
+    if (button == BUTTON_MENU && captivePortalIsRunning()) {
+        captivePortalStop();
+        lcdManagerShowHome();
+        return;
+    }
+
     if (captivePortalIsRunning()) {
-        // Keep the user on the AP instructions screen while captive portal is active.
+        // Keep the user on the AP instructions screen while captive portal is active (for other buttons).
         return;
     }
 
