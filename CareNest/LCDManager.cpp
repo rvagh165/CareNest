@@ -137,26 +137,26 @@ display.fillTriangle(114, 4, 122, 4, 118, 8, SSD1306_WHITE);
 display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
 
     // ── FEEDS CARD ─────────────────────── y = 14..32  (h=18)
-    display.drawRoundRect(2, 14, 124, 18, 3, SSD1306_WHITE);
+    display.drawRoundRect(2, 14, 86, 18, 3, SSD1306_WHITE);
 
     // Bottle icon  x=7, y=17  (7w × 13h fits inside card)
     display.drawRect(7, 20, 8, 9, SSD1306_WHITE);   // body
     display.drawRect(9, 17, 4, 3, SSD1306_WHITE);   // neck
-    display.drawLine(8, 23, 15, 23, SSD1306_WHITE); // milk line
+    display.drawLine(8, 23, 14, 23, SSD1306_WHITE); // milk line
 
     // Label
     display.setCursor(22, 18);
     display.print("Feeds ");
 
     // Count badge (filled, dark text)
-    display.fillRoundRect(105, 16, 19, 14, 3, SSD1306_WHITE);
+    display.fillRoundRect(65, 16, 19, 14, 3, SSD1306_WHITE);
     display.setTextColor(SSD1306_BLACK);
-    display.setCursor(110, 20);
+    display.setCursor(70 , 20);
     display.print(cachedFeedCount);
     display.setTextColor(SSD1306_WHITE);
 
     // ── DIAPER CARD ────────────────────── y = 35..52  (h=18)
-    display.drawRoundRect(2, 35, 124, 18, 3, SSD1306_WHITE);
+    display.drawRoundRect(2, 35, 86, 18, 3, SSD1306_WHITE);
 
     // Diaper icon x=7, y=38
     display.drawRect(7, 38, 12, 8, SSD1306_WHITE);
@@ -165,12 +165,12 @@ display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
 
     // Label
     display.setCursor(22, 39);
-    display.print("Diaper Change");
+    display.print("Diaper ");
 
     // Count badge
-    display.fillRoundRect(105, 37, 19, 14, 3, SSD1306_WHITE);
+    display.fillRoundRect(65, 37, 19, 14, 3, SSD1306_WHITE);
     display.setTextColor(SSD1306_BLACK);
-    display.setCursor(110, 41);
+    display.setCursor(70, 41);
     display.print(cachedDiaperCount);
     display.setTextColor(SSD1306_WHITE);
 
