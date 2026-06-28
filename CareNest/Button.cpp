@@ -119,12 +119,10 @@ bool buttonsGetEvent(ButtonId *button)
 bool buttonsPrepareForDeepSleepWake(void)
 {
     const gpio_num_t drivePins[] = {
-        (gpio_num_t)KEYPAD_ROW0_PIN,
-        (gpio_num_t)KEYPAD_ROW1_PIN
+        (gpio_num_t)KEYPAD_ROW0_PIN
     };
     const gpio_num_t wakePins[] = {
-        (gpio_num_t)KEYPAD_COL0_PIN,
-        (gpio_num_t)KEYPAD_COL1_PIN
+        (gpio_num_t)KEYPAD_COL0_PIN
     };
     uint64_t wakeMask = 0;
 
