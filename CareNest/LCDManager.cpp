@@ -3,7 +3,8 @@
 #include "DailyTracker.h"
 #include "StartupAnimation.h"
 #include "RTC.h"
-#include "sleeping_animation.h" // include generated frames
+#include "sleeping_animation.h" 
+#include "Battery.h"
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -81,35 +82,62 @@ static void drawSplash(void)
     // display.fillCircle(pulseX, 52, 2, SSD1306_WHITE);
     display.display();
 }
+// ── Battery icon: rounded-rect body + nub, with a fill bar for charge level ──
+static void drawBatteryIcon(int x, int y, int w, int h, uint8_t percent)
+{
+    if (percent > 100) percent = 100;
 
-// static void drawHome(void)
-// {
-//     display.clearDisplay();
-//     display.setTextSize(1);
-//     display.setCursor(0, 0);
-//     display.print("CareNest Baby Care");
-//     display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
+    // Terminal nub on top
+    int nubW = 8;
+    int nubH = 3;
+    int nubX = x + (w - nubW) / 2;
+    int nubY = y - nubH;
+    display.fillRect(nubX, nubY, nubW, nubH, SSD1306_WHITE);
 
-//     display.setCursor(0, 18);
-//     display.print("       Feeds  : ");
-//     display.print(cachedFeedCount);
+    // Outer body (rounded rect outline) — slimmer now
+    display.drawRoundRect(x, y, w, h, 3, SSD1306_WHITE);
 
-//     display.setCursor(0, 30);
-//     display.print("       Diaper : ");
-//     display.print(cachedDiaperCount);
-    
-//     display.setCursor(0, 44);
-//     display.print("        Time   ");
-    
-//     display.setCursor(0, 56);
-//     display.print("        Menu   ");
-//     display.display();
-// }
+    // Inner fill representing charge %, anchored to the bottom
+    const int pad = 2;
+    int innerX = x + pad;
+    int innerY = y + pad;
+    int innerW = w - (pad * 2);
+    int innerH = h - (pad * 2);
 
-// ─── drawHome ───────────────────────────────────────────────────
-// Physical display: 128×64 px, rotated 90° → portrait 64w × 128h
-// This code targets the NON-rotated (landscape) coordinate system.
-// setRotation(0) — draw in native 128w × 64h space.
+    int fillH = (innerH * percent) / 100;
+    int fillY = innerY + (innerH - fillH);
+
+    if (fillH > 1) {
+        display.fillRoundRect(innerX, fillY, innerW, fillH, 2, SSD1306_WHITE);
+    } else if (percent > 0) {
+        // sliver for very low charge so it's never totally invisible
+        display.drawFastHLine(innerX, innerY + innerH - 1, innerW, SSD1306_WHITE);
+    }
+}
+
+// ── Battery widget: icon on top, % text centered below it ──
+static void drawBatteryWidget(void)
+{
+    float   vBatt = getBatteryVoltage();
+    uint8_t pct   = batteryPercentage(vBatt);
+
+    const int battX = 99;   // centered in the empty gap right of the cards
+    const int battY = 17;
+    const int battW = 18;   // thinner body
+    const int battH = 24;
+
+    drawBatteryIcon(battX, battY, battW, battH, pct);
+
+    char buf[6];
+    snprintf(buf, sizeof(buf), "%u%%", pct);
+
+    int16_t  x1, y1;
+    uint16_t tw, th;
+    display.getTextBounds(buf, 0, 0, &x1, &y1, &tw, &th);
+    int textX = battX + (battW - tw) / 2;
+    display.setCursor(textX, battY + battH + 3);
+    display.print(buf);
+}
 
 static void drawHome(void)
 {
@@ -196,6 +224,8 @@ display.drawLine(0, 11, 127, 11, SSD1306_WHITE);
     display.setCursor(84, 56);
     display.print("Menu");
     display.setTextColor(SSD1306_WHITE);
+
+    drawBatteryWidget();
 
     display.display();
 }

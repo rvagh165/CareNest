@@ -9,6 +9,9 @@
 void setup()
 {
     Serial.begin(SERIAL_BAUD_RATE);
+    analogReadResolution(8);
+    analogSetAttenuation(ADC_11db);
+
 
     buttonsBegin();
     lcdManagerBegin();
