@@ -682,3 +682,27 @@ void lcdManagerShowSleepAnimation(uint32_t durationMs, uint16_t frameDelayMs)
         delay(frameDelayMs);
     }
 }
+
+void lcdManagerEnd(void)
+{
+    if (!displayReady) {
+        return;
+    }
+
+    display.clearDisplay();
+    display.display();
+
+    // Tell the OLED controller to power down before releasing the bus.
+    Wire.beginTransmission(OLED_ADDRESS);
+    Wire.write(0x00);
+    Wire.write(0xAE); // SSD1306 display off
+    Wire.endTransmission();
+
+    displayReady = false;
+    Wire.end();
+
+    pinMode(OLED_DC_PIN, INPUT);
+    pinMode(OLED_RESET_PIN, INPUT);
+    pinMode(OLED_SDA_PIN, INPUT);
+    pinMode(OLED_SCL_PIN, INPUT);
+}

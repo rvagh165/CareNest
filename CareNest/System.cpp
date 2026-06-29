@@ -45,9 +45,12 @@ static void systemEnterDeepSleep(void)
     }
 
     Serial.println(F("[System] Entering deep sleep - showing animation"));
+    sdEnd();
     // Show sleeping animation for 2 seconds before sleeping to ensure user sees it.
     // Non-blocking alternative: set a flag and let lcdManagerUpdate handle it.
     lcdManagerShowSleepAnimation(2000, 100);
+
+    lcdManagerEnd();
 
     delay(50);
     esp_deep_sleep_start();

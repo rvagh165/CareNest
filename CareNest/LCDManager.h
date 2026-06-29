@@ -17,4 +17,5 @@ void lcdManagerUpdateApRemaining(uint32_t remainingMs);
 bool lcdManagerIsApModeScreen(void);
 void lcdManagerShowHome(void);
 void lcdManagerShowSleepAnimation(uint32_t durationMs, uint16_t frameDelayMs);
+void lcdManagerEnd(void);
 #endif
