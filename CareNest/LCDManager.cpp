@@ -83,7 +83,7 @@ static void drawSplash(void)
     display.display();
 }
 // ── Battery icon: rounded-rect body + nub, with a fill bar for charge level ──
-static void drawBatteryIcon(int x, int y, int w, int h, uint8_t percent)
+static void drawBatteryIcon(int x, int y, int w, int h, uint8_t percent, bool charging)
 {
     if (percent > 100) percent = 100;
 
@@ -97,13 +97,36 @@ static void drawBatteryIcon(int x, int y, int w, int h, uint8_t percent)
     // Outer body (rounded rect outline) — slimmer now
     display.drawRoundRect(x, y, w, h, 3, SSD1306_WHITE);
 
-    // Inner fill representing charge %, anchored to the bottom
+    // Inner area
     const int pad = 2;
     int innerX = x + pad;
     int innerY = y + pad;
     int innerW = w - (pad * 2);
     int innerH = h - (pad * 2);
 
+if (charging) {
+    // ── Lightning bolt made of two triangles sharing a vertex ──
+    int bw = (int)(innerW * 0.60f);
+    int bh = (int)(innerH * 0.65f);
+    int boltX = innerX + (innerW - bw) / 2;
+    int boltY = innerY + (innerH - bh) / 2;
+
+    // Bolt points — top wedge larger, bottom wedge trimmed for balance
+    int p0x = boltX + bw * 0.62f;  int p0y = boltY;                  // top tip
+    int p1x = boltX;               int p1y = boltY + bh * 0.50f;     // left notch
+    int p2x = boltX + bw * 0.42f;  int p2y = boltY + bh * 0.52f;     // center waist (shared)
+    int p3x = boltX + bw * 0.40f;  int p3y = boltY + bh * 0.88f;     // bottom tip (pulled up/in)
+    int p4x = boltX + bw * 0.90f;  int p4y = boltY + bh * 0.50f;     // right notch (pulled in)
+
+    // Upper wedge
+    display.fillTriangle(p0x, p0y, p1x, p1y, p2x, p2y, SSD1306_WHITE);
+    // Lower wedge — shares vertex p2, so they touch exactly with no gap
+    display.fillTriangle(p2x, p2y, p3x, p3y, p4x, p4y, SSD1306_WHITE);
+
+    return;
+}
+
+    // Normal fill representing charge %, anchored to the bottom
     int fillH = (innerH * percent) / 100;
     int fillY = innerY + (innerH - fillH);
 
@@ -120,16 +143,22 @@ static void drawBatteryWidget(void)
 {
     float   vBatt = getBatteryVoltage();
     uint8_t pct   = batteryPercentage(vBatt);
+    bool    charging = (vBatt >= MAX_VOLTAGE);
 
     const int battX = 99;   // centered in the empty gap right of the cards
     const int battY = 17;
     const int battW = 18;   // thinner body
     const int battH = 24;
 
-    drawBatteryIcon(battX, battY, battW, battH, pct);
+    drawBatteryIcon(battX, battY, battW, battH, pct, charging);
 
     char buf[6];
-    snprintf(buf, sizeof(buf), "%u%%", pct);
+    if (!charging) {
+        snprintf(buf, sizeof(buf), "%u%%", pct);
+    }
+    else {
+        snprintf(buf, sizeof(buf), "   ");
+    }
 
     int16_t  x1, y1;
     uint16_t tw, th;

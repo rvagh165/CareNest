@@ -8,8 +8,7 @@
 
 #include <Arduino.h>
 
-#define MIN_VOLTAGE     3000
-#define MAX_VOLTAGE     4200
+#include "Battery.h"
 
 #define BATTERY_PIN     3
 #define ADC_SAMPLES     32
@@ -32,6 +31,10 @@ float getBatteryVoltage()
 
     float adcVoltage = (float)sum / ADC_SAMPLES;
     float rawVoltage = adcVoltage * 2.0f;   // undo divider
+
+    if(rawVoltage >= MAX_VOLTAGE) {
+        return MAX_VOLTAGE;        
+    }
 
     // --- Temporal smoothing (low-pass filter across calls) ---
     if (smoothedVoltage < 0)
